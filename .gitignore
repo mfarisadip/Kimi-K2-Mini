@@ -1,0 +1,40 @@
+# Model files
+k2-mini/
+k2-mini-backup*/
+k2-mini-demo/
+*.safetensors
+*.tar.gz
+
+# Log files
+*.log
+convert_log.txt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Backup files
+*.bak
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/

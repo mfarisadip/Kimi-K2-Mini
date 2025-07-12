@@ -54,6 +54,9 @@ class LayerAnalyzer:
                             
                             # 获取张量
                             tensor = f.get_tensor(key)
+                            # Handle FP8 types
+                            if str(tensor.dtype).startswith("torch.float8"):
+                                tensor = tensor.to(torch.float32)
                             magnitude = torch.abs(tensor).mean().item()
                             num_params = tensor.numel()
                             

@@ -62,8 +62,8 @@ class ExpertSelector:
                             tensor = f.get_tensor(key)
                             
                             # 重要性度量：L2范数 + 稀疏度
-                            l2_norm = torch.norm(tensor, p=2).item()
-                            sparsity = (tensor.abs() < 1e-6).float().mean().item()
+                            l2_norm = torch.norm(tensor.float(), p=2).item()
+                            sparsity = (tensor.float().abs() < 1e-6).float().mean().item()
                             
                             # 综合评分（L2范数高且稀疏度低的专家更重要）
                             importance = l2_norm * (1.0 - sparsity)
