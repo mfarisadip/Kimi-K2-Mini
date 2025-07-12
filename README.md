@@ -7,9 +7,10 @@ A miniaturized version of the Kimi-K2 model optimized for deployment on single H
 Kimi-K2-Mini is a compressed version of the 1.07T parameter Kimi-K2 model, reduced to ~32.5B parameters while maintaining strong performance. This project implements several optimization strategies:
 
 - **Architecture reduction**: From 61 to 24 layers
-- **Expert pruning**: From 384 to 16 experts per layer
+- **Expert pruning**: From 384 to 16 experts per layer  
 - **Quantization support**: INT8/INT4 for further memory reduction
 - **Dynamic loading**: Smart expert caching and swapping
+- **FP8 compatibility**: Full support for FP8 model conversion
 
 ## Key Features
 
@@ -18,6 +19,9 @@ Kimi-K2-Mini is a compressed version of the 1.07T parameter Kimi-K2 model, reduc
 - ✅ Preserves 60-70% of original model capabilities
 - ✅ 5-10x faster inference
 - ✅ Support for code generation, Q&A, and reasoning tasks
+- ✅ FP8 to FP16 conversion support
+- ✅ Weight dimension auto-correction
+- ✅ CloudExe integration for remote GPU execution
 
 ## Model Specifications
 
@@ -40,34 +44,85 @@ pip install -r requirements.txt
 
 ## Quick Start
 
-```python
-from src.inference import K2MiniInference
+### Using with Transformers
 
-# Load model
-engine = K2MiniInference("path/to/k2-mini")
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_path = "./k2-mini"
+tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(
+    model_path,
+    trust_remote_code=True,
+    torch_dtype="auto",
+    device_map="auto"
+)
 
 # Generate text
-response = engine.generate("解释一下什么是机器学习")
-print(response)
+messages = [{"role": "user", "content": "解释一下什么是机器学习"}]
+inputs = tokenizer.apply_chat_template(messages, tokenize=True, return_tensors="pt")
+outputs = model.generate(inputs, max_new_tokens=200)
+print(tokenizer.decode(outputs[0]))
+```
+
+### Using with vLLM
+
+```python
+from vllm import LLM, SamplingParams
+
+llm = LLM(model="./k2-mini", trust_remote_code=True)
+sampling_params = SamplingParams(temperature=0.7, max_tokens=200)
+
+prompts = ["解释一下什么是机器学习"]
+outputs = llm.generate(prompts, sampling_params)
+print(outputs[0].outputs[0].text)
 ```
 
 ## Model Creation
 
-To create K2-Mini from the full K2 model:
+### Standard Mode (Intelligent Layer Selection)
 
 ```bash
-# 1. Analyze layer importance
-python scripts/analyze_layers.py --model-path /path/to/kimi-k2-instruct
-
-# 2. Extract and convert model
+# Analyze and convert with intelligent layer/expert selection
 python scripts/convert_to_mini.py \
     --source-model /path/to/kimi-k2-instruct \
     --output-path ./k2-mini \
     --num-layers 24 \
     --experts-per-layer 16
+```
 
-# 3. (Optional) Apply quantization
-python scripts/quantize.py --model-path ./k2-mini --quantization int8
+### Fast Mode (Uniform Layer Selection)
+
+```bash
+# Quick conversion with uniform layer selection
+python scripts/convert_to_mini_fast.py \
+    --source-model /path/to/kimi-k2-instruct \
+    --output-path ./k2-mini
+```
+
+### Fix Weight Dimensions (if needed)
+
+```bash
+# Fix any weight dimension mismatches
+python fix_all_k2mini_weights.py --model-path ./k2-mini
+```
+
+## Testing
+
+The project includes comprehensive testing scripts:
+
+```bash
+# Test with Transformers
+python test_k2mini_simple.py
+
+# Test with vLLM
+python test_vllm_fixed.py  
+
+# Test with CloudExe GPU
+python test_k2mini_cloudexe.py
+
+# Full inference test
+python test_k2mini_inference.py
 ```
 
 ## Performance
@@ -86,17 +141,47 @@ Benchmarks on common tasks:
 ```
 Kimi-K2-Mini/
 ├── src/
-│   ├── expert_selector.py # Expert selection algorithms
+│   ├── expert_selector.py # Expert selection algorithms (FP8 compatible)
 │   ├── quantization.py   # Quantization utilities
 │   └── inference.py      # Optimized inference
 ├── scripts/
 │   ├── analyze_layers.py # Layer importance analysis
-│   ├── convert_to_mini.py # Model conversion script
-│   └── quantize.py       # Quantization script
+│   ├── convert_to_mini.py # Intelligent conversion script
+│   └── convert_to_mini_fast.py # Fast conversion script
 ├── configs/
 │   └── k2_mini_config.json # Model configuration
+├── test_*.py            # Various testing scripts
+├── fix_*.py             # Weight correction utilities
 └── utils/
     └── memory_utils.py   # Memory optimization tools
+```
+
+## Known Issues
+
+1. **Missing shared_experts weights**: The current conversion script doesn't extract shared expert weights. This is being addressed in a future update.
+2. **Memory requirements**: Initial model loading requires ~40GB RAM even for the mini version. Use CloudExe or high-memory instances for testing.
+
+## Troubleshooting
+
+### FP8 Conversion Errors
+
+If you encounter FP8-related errors during conversion:
+```
+RuntimeError: 'norm_cpu' not implemented for 'Float8_e4m3fn'
+```
+
+This has been fixed in the latest version. The expert_selector.py now handles FP8 tensors correctly.
+
+### Weight Dimension Mismatches
+
+If you see errors like:
+```
+size mismatch for gate.weight: copying a param with shape torch.Size([384])
+```
+
+Run the weight fixing script:
+```bash
+python fix_all_k2mini_weights.py --model-path ./k2-mini
 ```
 
 ## Citation
@@ -120,3 +205,4 @@ This project is licensed under the Apache 2.0 License.
 
 - Original Kimi-K2 model by Moonshot AI
 - Optimization techniques inspired by the K2-LeetCode project
+- FP8 support and testing infrastructure developed with CloudExe
