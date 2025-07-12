@@ -206,3 +206,23 @@ This project is licensed under the Apache 2.0 License.
 - Original Kimi-K2 model by Moonshot AI
 - Optimization techniques inspired by the K2-LeetCode project
 - FP8 support and testing infrastructure developed with CloudExe
+## Current Status (2025-07-12)
+
+⚠️ **Partially Working** - See STATUS.md for detailed report
+
+### Quick Summary
+- ✅ Model loads successfully on H100 (40.6GB VRAM)
+- ✅ Weights restored and dimensions fixed
+- ❌ Generation fails due to DynamicCache API incompatibility
+- 🔧 Quick fix available (see STATUS.md)
+
+### Recommended Approach
+For immediate use, we recommend:
+1. Apply the quick fix to modeling_deepseek.py (see STATUS.md)
+2. Use vLLM for better compatibility
+3. Or wait for the next update with full fixes
+
+## Contributors
+
+- Peter Yu Qin - Initial implementation and debugging
+- CloudExe Team - GPU infrastructure support
