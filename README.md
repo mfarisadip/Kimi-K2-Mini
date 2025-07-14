@@ -163,3 +163,26 @@ This project is licensed under the Apache 2.0 License.
 ---
 
 **Note**: This is experimental research into model compression techniques. The goal is advancing understanding of efficient large model deployment rather than producing production-ready software.
+
+## Latest Update (2025-07-14)
+
+### Current Status: Model loads but inference fails ⚠️
+
+We successfully compressed Kimi-K2 from 1.07T to 32.5B parameters and the model loads on H100 GPU. However, inference fails due to numerical instability issues. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed analysis.
+
+### Key Findings
+- ✅ Model compression: 1.07T → 32.5B (successful)
+- ✅ Memory usage: ~40GB (fits in single H100)
+- ❌ Inference: Fails with CUDA assertion errors
+- 📊 Root cause: 98% parameter reduction too aggressive
+
+### Recommended Next Steps
+Instead of extreme compression, we recommend **Dynamic Expert Loading**:
+- Keep all 384 experts but load on-demand
+- Use 2TB CPU memory for caching
+- Trade inference speed for model quality
+
+See [FUTURE_WORK.md](FUTURE_WORK.md) for the proposed architecture.
+
+---
+
