@@ -1,5 +1,7 @@
 {
-  "architectures": ["KimiK2ForCausalLM"],
+  "architectures": [
+    "KimiK2ForCausalLM"
+  ],
   "model_type": "kimi_k2_mini",
   "hidden_size": 7168,
   "intermediate_size": 18432,
